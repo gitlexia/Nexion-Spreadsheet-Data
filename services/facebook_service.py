@@ -38,7 +38,17 @@ def get_pages(user_token: str) -> list[dict]:
     pages = []
     while url:
         r = requests.get(url, params=params, timeout=30)
-        r.raise_for_status()
+
+        if not r.ok:
+            try:
+                error_data = r.json()
+            except Exception:
+                error_data = r.text
+        
+            raise RuntimeError(
+                f"Meta API error {r.status_code}: {error_data}"
+            )
+        
         payload = r.json()
         if "error" in payload:
             raise RuntimeError(payload["error"].get("message", "Meta API error"))
